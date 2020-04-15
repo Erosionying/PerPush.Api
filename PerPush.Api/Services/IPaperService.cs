@@ -10,14 +10,9 @@ namespace PerPush.Api.Services
     {
         //All public documents
         Task<IEnumerable<Paper>> GetPapersAsync();
-        //File under user name
-        Task<IEnumerable<Paper>> GetUserPapersAsync(Guid userId);
-        Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId);
-        Task<Paper> GetPaperAsync(Guid userId, Guid paperId);
         void AddPaper(Guid userId, Paper paper);
         void UpdatePaper(Paper paper);
         void DeletePaper(Paper paper);
-
 
 
         Task<bool> SaveAsync();

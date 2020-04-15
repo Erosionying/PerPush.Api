@@ -11,7 +11,8 @@ namespace PerPush.Api.Profiles
     {
         public UserProfiles()
         {
-            CreateMap<User, UserDto>();
+            CreateMap<User, UserDto>()
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.FirstName + src.LastName));
         }
     }
 }

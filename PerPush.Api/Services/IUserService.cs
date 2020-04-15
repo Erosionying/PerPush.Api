@@ -12,6 +12,13 @@ namespace PerPush.Api.Services
         Task<User> GetUserInfoAsync(Guid userId);
         void UpdateUserInfo(User user);
         void RegisteredUser(User user);
+        //---------------------Paper------------------
+        
+        //File under user name
+        Task<IEnumerable<Paper>> GetUserPapersAsync(Guid userId);
+        Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId);
+        Task<Paper> GetPaperAsync(Guid userId, Guid paperId);
+        //--------------------------------------------
         Task<bool> UserExistsAsync(Guid userId);
         Task<bool> SaveAsync();
 

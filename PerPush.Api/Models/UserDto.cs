@@ -9,11 +9,9 @@ namespace PerPush.Api.Models
     {
         public string NickName { get; set; }
 
-        public string FirstName { get; set; }
+        public string Name { get; set; }
         //Account user name
         public string Email { get; set; }
-
-        public string LastName { get; set; }
 
         public string SchoolName { get; set; }
 

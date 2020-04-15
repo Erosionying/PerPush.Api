@@ -17,53 +17,15 @@ namespace PerPush.Api.Services
             this.context = context ?? 
                 throw new ArgumentNullException(nameof(context));
         }
-        public async Task<IEnumerable<Paper>> GetUserPapersAsync(Guid userId)
-        {
-            if(userId == Guid.Empty)
-            {
-                throw new ArgumentNullException(nameof(userId));
-            }
-            return await context.papers
-                .Where(x => x.Id == userId)
-                .OrderBy(x => x.StartTime)
-                .ToListAsync();
-        }
         public async Task<IEnumerable<Paper>> GetPapersAsync()
         {
 
             var papers = await context.papers.Where(x => x.Auth == true).ToListAsync();
-            foreach(var paper in papers)
+            foreach (var paper in papers)
             {
                 paper.Author = await context.users.Where(x => x.Id == paper.UserId).FirstOrDefaultAsync();
             }
             return papers;
-        }
-        public async Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId)
-        {
-            if(userId == Guid.Empty)
-            {
-                throw new ArgumentNullException(nameof(userId));
-            }
-            var papers = await context.papers
-                .Where(x => x.UserId == userId && x.Auth == true)
-                .ToListAsync();
-
-            return papers;
-        }
-        public async Task<Paper> GetPaperAsync(Guid userId, Guid paperId)
-        {
-            if(userId == Guid.Empty)
-            {
-                throw new ArgumentNullException(nameof(userId));
-            }
-            if(paperId == Guid.Empty)
-            {
-                throw new ArgumentNullException(nameof(paperId));
-            }
-
-            return await context.papers
-                .Where(x => x.UserId == userId && x.Id == paperId)
-                .FirstOrDefaultAsync();
         }
         public void AddPaper(Guid userId, Paper paper)
         {

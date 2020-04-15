@@ -30,7 +30,45 @@ namespace PerPush.Api.Services
 
             return userInfo;
         }
+        public async Task<IEnumerable<Paper>> GetUserPapersAsync(Guid userId)
+        {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(userId));
+            }
+            return await context.papers
+                .Where(x => x.UserId == userId)
+                .OrderBy(x => x.StartTime)
+                .ToListAsync();
+        }
+        
+        public async Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId)
+        {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(userId));
+            }
+            var papers = await context.papers
+                .Where(x => x.UserId == userId && x.Auth == true)
+                .ToListAsync();
 
+            return papers;
+        }
+        public async Task<Paper> GetPaperAsync(Guid userId, Guid paperId)
+        {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(userId));
+            }
+            if (paperId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(paperId));
+            }
+
+            return await context.papers
+                .Where(x => x.UserId == userId && x.Id == paperId)
+                .FirstOrDefaultAsync();
+        }
         public bool IsValid(LoginRequestDto req)
         {
             var user =  context.users

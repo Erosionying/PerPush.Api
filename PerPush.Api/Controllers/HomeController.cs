@@ -18,11 +18,11 @@ namespace PerPush.Api.Controllers
 
         public HomeController(IPaperService paperService, IMapper mapper)
         {
-            this.paperService = paperService ?? 
-                throw new ArgumentNullException(nameof(paperService));
+            this.paperService = paperService ?? throw new ArgumentNullException(nameof(paperService));
             this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
         [HttpGet]
+        [HttpHead]
         public async Task<ActionResult<IEnumerable<PaperDto>>> GetPapers()
         {
             var papers = await paperService.GetPapersAsync();
