@@ -32,13 +32,18 @@ namespace PerPush.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers(setup =>
+            {
+                setup.ReturnHttpNotAcceptable = true;
+            }).AddXmlDataContractSerializerFormatters();
+
             services.AddDbContext<PerPushDbContext>(options =>
             {
                 options.UseSqlServer(Configuration.GetConnectionString("Localteststring"));
             });
 
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IPaperService, PaperService>();
             services.AddScoped<IAuthenticateService, TokenAuthenticationService>();
             services.AddScoped<IParameterVerifyService, ParameterVerifyService>();
 

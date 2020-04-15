@@ -30,9 +30,25 @@ namespace PerPush.Api.Services
         }
         public async Task<IEnumerable<Paper>> GetPapersAsync()
         {
-            return await context.papers
-                .Where(x => x.Auth == true)
+
+            var papers = await context.papers.Where(x => x.Auth == true).ToListAsync();
+            foreach(var paper in papers)
+            {
+                paper.Author = await context.users.Where(x => x.Id == paper.UserId).FirstOrDefaultAsync();
+            }
+            return papers;
+        }
+        public async Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId)
+        {
+            if(userId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(userId));
+            }
+            var papers = await context.papers
+                .Where(x => x.UserId == userId && x.Auth == true)
                 .ToListAsync();
+
+            return papers;
         }
         public async Task<Paper> GetPaperAsync(Guid userId, Guid paperId)
         {
