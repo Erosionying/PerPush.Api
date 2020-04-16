@@ -41,7 +41,22 @@ namespace PerPush.Api.Services
                 .OrderBy(x => x.StartTime)
                 .ToListAsync();
         }
-        
+        public async Task<IEnumerable<Paper>> GetUserPrivatePapersAsync(Guid userId, IEnumerable<Guid> papersId)
+        {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(userId));
+            }
+            if(papersId == null)
+            {
+                throw new ArgumentNullException(nameof(papersId));
+            }
+            return await context.papers
+                .Where(x => x.UserId == userId && x.Auth == false && papersId.Contains(x.Id))
+                .OrderBy(x => x.Title)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId)
         {
             if (userId == Guid.Empty)
@@ -53,6 +68,21 @@ namespace PerPush.Api.Services
                 .ToListAsync();
 
             return papers;
+        }
+        public async Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId, IEnumerable<Guid> papersId)
+        {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(userId));
+            }
+            if (papersId == null)
+            {
+                throw new ArgumentNullException(nameof(papersId));
+            }
+            return await context.papers
+                .Where(x => x.UserId == userId && x.Auth == true && papersId.Contains(x.Id))
+                .OrderBy(x => x.Title)
+                .ToListAsync();
         }
         public async Task<Paper> GetPaperAsync(Guid userId, Guid paperId)
         {

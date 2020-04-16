@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using PerPush.Api.Entities;
+using PerPush.Api.Helpers;
 using PerPush.Api.Models;
 using PerPush.Api.Services;
 using System;
@@ -24,34 +26,67 @@ namespace PerPush.Api.Controllers
             this.userService = userService ?? throw new ArgumentNullException(nameof(userService));
             this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
-        [HttpGet("pubpapers",Name = nameof(GetPublicPapersForUser))]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPublicPapersForUser(Guid userId)
+
+        [HttpGet("pubpapers/{paperIds}",Name = nameof(GetPublicPapersForUser))]
+        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPublicPapersForUser(Guid userId,
+            [FromRoute]
+            [ModelBinder(BinderType = typeof(ArrayModelBinder))]
+            IEnumerable<Guid> paperIds)
         {
             if (!await userService.UserExistsAsync(userId))
             {
                 return NotFound();
             }
+            if(paperIds == null)
+            {
+                var papers = await userService.GetUserPublicPaperAsync(userId);
 
-            var papers = await userService.GetUserPublicPaperAsync(userId);
+                var paperDtos = mapper.Map<IEnumerable<PaperDto>>(papers);
 
-            var paperDtos = mapper.Map<IEnumerable<PaperDto>>(papers);
+                return Ok(paperDtos);
+            }
+            var entities = await userService.GetUserPublicPaperAsync(userId, paperIds);
 
-            return Ok(paperDtos);
-
-        }
-        [HttpGet("pripapers",Name = nameof(GetPrivatePapersForUser))]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPrivatePapersForUser(Guid userId)
-        {
-            if(! await userService.UserExistsAsync(userId))
+            if(entities.Count() != paperIds.Count())
             {
                 return NotFound();
             }
 
-            var papers = await userService.GetUserPrivatePapersAsync(userId);
+            var returnDto = mapper.Map<IEnumerable<PaperDto>>(entities);
 
-            var paperDtos = mapper.Map<IEnumerable<PaperDto>>(papers);
+            return Ok(returnDto);
+            
 
-            return Ok(paperDtos);
+        }
+        [HttpGet("pripapers/{paperIds}",Name = nameof(GetPrivatePapersForUser))]
+        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPrivatePapersForUser(Guid userId,
+            [FromRoute]
+            [ModelBinder(BinderType = typeof(ArrayModelBinder))]
+            IEnumerable<Guid> paperIds)
+        {
+            if(!await userService.UserExistsAsync(userId))
+            {
+                return NotFound();
+            }
+            if(paperIds == null)
+            {
+                var papers = await userService.GetUserPrivatePapersAsync(userId);
+
+                var paperDtos = mapper.Map<IEnumerable<PaperDto>>(papers);
+
+                return Ok(paperDtos);
+            }
+
+            var entities = await userService.GetUserPrivatePapersAsync(userId, paperIds);
+
+            if(entities.Count() != paperIds.Count())
+            {
+                return NotFound();
+            }
+
+            var returnDto = mapper.Map<IEnumerable<PaperDto>>(entities);
+            return Ok(returnDto);
+            
         }
         [HttpGet("center")]
         public async Task<ActionResult<UserDto>> GetUserInfo([FromRoute]Guid userId)
@@ -77,10 +112,18 @@ namespace PerPush.Api.Controllers
 
             var returnDto = mapper.Map<PaperDto>(paper);
 
-            return CreatedAtRoute(nameof(GetPublicPapersForUser), new { userId,paperId = returnDto.Id }, returnDto);
+            if(paper.Auth == true)
+            {
+                return CreatedAtRoute(nameof(GetPublicPapersForUser), new { userId, paperId = returnDto.Id }, returnDto);
+            }
+            return CreatedAtRoute(nameof(GetPrivatePapersForUser), new { userId, paperId = returnDto.Id }, returnDto);
 
         }
-        //[HttpPost]
-        //public async Task<ActionResult<>>
+        [HttpOptions]
+        public IActionResult GetOptions()
+        {
+            Response.Headers.Add("Allow","GET,POST,OPTIONS");
+            return Ok();
+        }
     }
 }

@@ -16,7 +16,9 @@ namespace PerPush.Api.Services
         
         //File under user name
         Task<IEnumerable<Paper>> GetUserPrivatePapersAsync(Guid userId);
+        Task<IEnumerable<Paper>> GetUserPrivatePapersAsync(Guid userId, IEnumerable<Guid> papersId);
         Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId);
+        Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId, IEnumerable<Guid> papersId);
         Task<Paper> GetPaperAsync(Guid userId, Guid paperId);
         void AddPaper(Guid userId, Paper paper);
         void UpdatePaper(Paper paper);

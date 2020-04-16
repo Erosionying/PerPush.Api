@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace PerPush.Api.Controllers
 {
-    [Route("api/Account")]
+    [Route("api/account")]
     [ApiController]
     public class UserRegisteredController:ControllerBase
     {
@@ -22,7 +22,15 @@ namespace PerPush.Api.Controllers
             this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             this.userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
+        [HttpGet(Name = nameof(GetUserInfo))]
+        public async Task<ActionResult<UserDto>> GetUserInfo([FromRoute]Guid userId)
+        {
+            var user = await userService.GetUserInfoAsync(userId);
 
+            var userDto = mapper.Map<UserDto>(user);
+
+            return Ok(userDto);
+        }
         [HttpPost]
         public async Task<ActionResult<UserDto>> RegisteredAccount([FromBody] UserRegisteredDto userRegisteredDto)
         {
@@ -35,7 +43,7 @@ namespace PerPush.Api.Controllers
             {
                 await userService.SaveAsync();
 
-                return Created("api/Account", returnDto);
+                return CreatedAtRoute(nameof(GetUserInfo),new { userId = user.Id }, returnDto);
             }
 
             return BadRequest(returnDto);
