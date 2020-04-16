@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PerPush.Api.Controllers
 {
-    [Route("api/user/{userId}/papers")]
+    [Route("api/user/{userId}")]
     [ApiController]
     public class PapersController:ControllerBase
     {
@@ -23,41 +23,55 @@ namespace PerPush.Api.Controllers
             this.paperService = paperService ?? throw new ArgumentNullException(nameof(paperService));
             this.userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
-
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPapersForUser(Guid userId)
-        {
-            if(!await userService.UserExistsAsync(userId))
-            {
-                return NotFound();
-            }
-
-            var papers = await userService.GetUserPublicPaperAsync(userId);
-
-            var paperDtos =  mapper.Map<IEnumerable<PaperDto>>(papers);
-
-            return Ok(paperDtos);
-
-        }
-        [HttpGet("{paperId}")]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPapersForUser(Guid userId, Guid paperId)
+        
+        [HttpGet("papers")]
+        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPublicPapersForUser(Guid userId)
         {
             if (!await userService.UserExistsAsync(userId))
             {
                 return NotFound();
             }
 
-            var paper = await userService.GetPaperAsync(userId,paperId);
-            if(paper == null)
+            var papers = await userService.GetUserPublicPaperAsync(userId);
+
+            var paperDtos = mapper.Map<IEnumerable<PaperDto>>(papers);
+
+            return Ok(paperDtos);
+
+        }
+        [HttpGet("paper/{paperId}")]
+        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPaperForUser(Guid userId, Guid paperId)
+        {
+            if (!await userService.UserExistsAsync(userId))
             {
                 return NotFound();
             }
 
+            var paper = await userService.GetPaperAsync(userId, paperId);
+            if (paper == null)
+            {
+                return NotFound();
+            }
 
             var paperDto = mapper.Map<PaperDto>(paper);
 
             return Ok(paperDto);
 
         }
+        [HttpGet]
+        public async Task<ActionResult<UserInfoDto>> GetAuthorInfo(Guid userId)
+        {
+            if (!await userService.UserExistsAsync(userId))
+            {
+                return NotFound();
+            }
+
+            var userInfo = await userService.GetUserInfoAsync(userId);
+            var Author = mapper.Map<UserInfoDto>(userInfo);
+
+            return Ok(Author);
+
+        }
+        
     }
 }

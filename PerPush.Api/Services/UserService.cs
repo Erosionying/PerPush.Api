@@ -30,14 +30,14 @@ namespace PerPush.Api.Services
 
             return userInfo;
         }
-        public async Task<IEnumerable<Paper>> GetUserPapersAsync(Guid userId)
+        public async Task<IEnumerable<Paper>> GetUserPrivatePapersAsync(Guid userId)
         {
             if (userId == Guid.Empty)
             {
                 throw new ArgumentNullException(nameof(userId));
             }
             return await context.papers
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && x.Auth == false)
                 .OrderBy(x => x.StartTime)
                 .ToListAsync();
         }
@@ -66,7 +66,7 @@ namespace PerPush.Api.Services
             }
 
             return await context.papers
-                .Where(x => x.UserId == userId && x.Id == paperId)
+                .Where(x => x.UserId == userId && x.Id == paperId && x.Auth == true)
                 .FirstOrDefaultAsync();
         }
         public bool IsValid(LoginRequestDto req)
@@ -84,20 +84,51 @@ namespace PerPush.Api.Services
         }
 
         //add user
-        public void RegisteredUser(User user)
+        public async Task<bool> RegisteredUser(User user)
         {
             if(user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
-            user.Id = Guid.NewGuid();
 
+            var queryUser = await context.users.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
+
+            if(!(queryUser == null))
+            {
+                return false;
+            }
+            user.Id = Guid.NewGuid();
             context.Add(user);
+            return true;
         }
 
         public void UpdateUserInfo(User user)
         {
 
+        }
+        public void AddPaper(Guid userId, Paper paper)
+        {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(userId));
+            }
+            if (paper == null)
+            {
+                throw new ArgumentNullException(nameof(paper));
+            }
+
+            paper.UserId = userId;
+            paper.Id = Guid.NewGuid();
+            context.papers.Add(paper);
+
+        }
+        public void UpdatePaper(Paper paper)
+        {
+
+        }
+        public void DeletePaper(Paper paper)
+        {
+            context.papers.Remove(paper);
         }
 
         public async Task<bool> SaveAsync()

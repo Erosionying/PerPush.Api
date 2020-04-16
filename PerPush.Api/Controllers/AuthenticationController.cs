@@ -21,7 +21,7 @@ namespace PerPush.Api.Controllers
                 throw new ArgumentNullException(nameof(authenticateService));
         }
         [AllowAnonymous]
-        [HttpPost, Route("requesToken")]
+        [HttpPost, Route("requesToken",Name = nameof(RequestToken))]
         public ActionResult RequestToken([FromBody] LoginRequestDto request)
         {
             if(!ModelState.IsValid)

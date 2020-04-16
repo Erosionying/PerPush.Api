@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PerPush.Api.Data;
+using PerPush.Api.DtoParameters;
 using PerPush.Api.Entities;
 using System;
 using System.Collections.Generic;
@@ -17,47 +18,62 @@ namespace PerPush.Api.Services
             this.context = context ?? 
                 throw new ArgumentNullException(nameof(context));
         }
-        public async Task<IEnumerable<Paper>> GetPapersAsync()
+        public async Task<IEnumerable<Paper>> GetPapersAsync(PaperDtoParameters paperDtoParameters)
         {
-
-            var papers = await context.papers.Where(x => x.Auth == true).ToListAsync();
-            foreach (var paper in papers)
+            //If the query parameter is empty, return normally
+            if (string.IsNullOrWhiteSpace(paperDtoParameters.Lable) && 
+                string.IsNullOrWhiteSpace(paperDtoParameters.Title))
             {
-                paper.Author = await context.users.Where(x => x.Id == paper.UserId).FirstOrDefaultAsync();
-            }
-            return papers;
-        }
-        public void AddPaper(Guid userId, Paper paper)
-        {
-            if(userId == Guid.Empty)
-            {
-                throw new ArgumentNullException(nameof(userId));
-            }
-            if( paper == null)
-            {
-                throw new ArgumentNullException(nameof(paper));
+                var papers = await context.papers
+                    .Where(x => x.Auth == true)
+                    .ToListAsync();
+                foreach (var paper in papers)
+                {
+                    paper.Author = await context.users
+                        .Where(x => x.Id == paper.UserId)
+                        .FirstOrDefaultAsync();
+                }
+                return papers;
             }
 
-            paper.UserId = userId;
-            context.papers.Add(paper);
+            var items = context.papers as IQueryable<Paper>;
+
+            if (!string.IsNullOrWhiteSpace(paperDtoParameters.Title))
+            {
+                paperDtoParameters.Title = paperDtoParameters.Title.Trim();
+                items = items.Where(x => x.Title.Contains(paperDtoParameters.Title));
+            }
+
+            if (!string.IsNullOrWhiteSpace(paperDtoParameters.Lable))
+            {
+                paperDtoParameters.Lable = paperDtoParameters.Lable.Trim();
+                items = items.Where(x => x.Auth == true && x.Lable.Contains(paperDtoParameters.Lable));
+
+            }
+
+            if (!string.IsNullOrWhiteSpace(paperDtoParameters.SearchTerm))
+            {
+                paperDtoParameters.SearchTerm = paperDtoParameters.SearchTerm.Trim();
+                items = items
+                    .Where(x => x.Title.Contains(paperDtoParameters.SearchTerm) ||
+                    x.Description.Contains(paperDtoParameters.SearchTerm) ||
+                    x.Lable.Contains(paperDtoParameters.Lable));
+            }
+
+            items = items.Where(x => x.Auth == true);
+            var returnItems = await items.OrderBy(x => x.StartTime).ToListAsync();
+
+            //Take the Data From DataBase
+            foreach (var paper in returnItems)
+            {
+                paper.Author = await context.users
+                    .Where(x => x.Id == paper.UserId)
+                    .FirstOrDefaultAsync();
+            }
+            
+            return returnItems;
 
         }
-        public void UpdatePaper(Paper paper)
-        {
-
-        }
-        public void DeletePaper(Paper paper)
-        {
-            context.papers.Remove(paper);
-        }
-
-        
-
-        public async Task<bool> SaveAsync()
-        {
-            return await context.SaveChangesAsync() >= 0;
-        }
-
         
     }
 }

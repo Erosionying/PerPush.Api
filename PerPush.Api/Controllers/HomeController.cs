@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using PerPush.Api.DtoParameters;
 using PerPush.Api.Models;
 using PerPush.Api.Services;
 using System;
@@ -23,9 +24,9 @@ namespace PerPush.Api.Controllers
         }
         [HttpGet]
         [HttpHead]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPapers()
+        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPapers([FromQuery] PaperDtoParameters paperDtoParameters)
         {
-            var papers = await paperService.GetPapersAsync();
+            var papers = await paperService.GetPapersAsync(paperDtoParameters);
 
             var papersDto = mapper.Map<IEnumerable<PaperDto>>(papers);
 

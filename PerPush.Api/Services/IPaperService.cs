@@ -1,4 +1,5 @@
-﻿using PerPush.Api.Entities;
+﻿using PerPush.Api.DtoParameters;
+using PerPush.Api.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,12 +10,7 @@ namespace PerPush.Api.Services
     public interface IPaperService
     {
         //All public documents
-        Task<IEnumerable<Paper>> GetPapersAsync();
-        void AddPaper(Guid userId, Paper paper);
-        void UpdatePaper(Paper paper);
-        void DeletePaper(Paper paper);
+        Task<IEnumerable<Paper>> GetPapersAsync(PaperDtoParameters paperDtoParameters);
 
-
-        Task<bool> SaveAsync();
     }
 }
