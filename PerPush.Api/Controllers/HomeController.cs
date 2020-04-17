@@ -24,13 +24,26 @@ namespace PerPush.Api.Controllers
         }
         [HttpGet]
         [HttpHead]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPapers([FromQuery] PaperDtoParameters paperDtoParameters)
+        public async Task<ActionResult<IEnumerable<PaperDto>>> GetBriefPapers([FromQuery] PaperDtoParameters paperDtoParameters)
         {
             var papers = await paperService.GetPapersAsync(paperDtoParameters);
 
-            var papersDto = mapper.Map<IEnumerable<PaperDto>>(papers);
+            var papersDto = mapper.Map<IEnumerable<PaperBriefDetailDto>>(papers);
 
             return Ok(papersDto);
+        }
+        [HttpGet("{userId}/paper/{paperId}")]
+        public async Task<ActionResult<PaperDto>> GetPaper(Guid userId, Guid paperId)
+        {
+            var paperEntity = await paperService.GetPublicPaperAsync(userId, paperId);
+            if(paperEntity == null)
+            {
+                return NotFound();
+            }
+
+            var returnDto = mapper.Map<PaperDto>(paperEntity);
+
+            return Ok(returnDto);
         }
     }
 }

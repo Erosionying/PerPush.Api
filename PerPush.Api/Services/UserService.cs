@@ -84,6 +84,7 @@ namespace PerPush.Api.Services
                 .OrderBy(x => x.Title)
                 .ToListAsync();
         }
+        
         public async Task<Paper> GetPaperAsync(Guid userId, Guid paperId)
         {
             if (userId == Guid.Empty)
@@ -96,7 +97,7 @@ namespace PerPush.Api.Services
             }
 
             return await context.papers
-                .Where(x => x.UserId == userId && x.Id == paperId && x.Auth == true)
+                .Where(x => x.UserId == userId && x.Id == paperId)
                 .FirstOrDefaultAsync();
         }
         public bool IsValid(LoginRequestDto req)

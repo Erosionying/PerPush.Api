@@ -12,7 +12,7 @@ namespace PerPush.Api.Profiles
         public UserProfiles()
         {
             CreateMap<User, UserDto>()
-                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.FirstName + src.LastName));
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.LastName + src.FirstName));
             CreateMap<User, UserInfoDto>();
             CreateMap<UserRegisteredDto, User>();
         }

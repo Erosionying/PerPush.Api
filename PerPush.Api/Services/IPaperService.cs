@@ -11,6 +11,7 @@ namespace PerPush.Api.Services
     {
         //All public documents
         Task<IEnumerable<Paper>> GetPapersAsync(PaperDtoParameters paperDtoParameters);
+        Task<Paper> GetPublicPaperAsync(Guid userId, Guid paperId);
 
     }
 }

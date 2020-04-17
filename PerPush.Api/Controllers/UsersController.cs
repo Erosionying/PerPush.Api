@@ -119,10 +119,36 @@ namespace PerPush.Api.Controllers
             return CreatedAtRoute(nameof(GetPrivatePapersForUser), new { userId, paperId = returnDto.Id }, returnDto);
 
         }
+        [HttpPut("paper/{paperId}")]
+        public async Task<ActionResult<PaperDto>> UpdatePaper(
+            [FromRoute]Guid userId,
+            [FromRoute]Guid paperId,
+            PaperUpdateDto paper)
+        {
+            if(!await userService.UserExistsAsync(userId))
+            {
+                return NotFound();
+            }
+
+            var paperEntity = await userService.GetPaperAsync(userId,paperId);
+
+            if(paperEntity == null)
+            {
+                return NotFound();
+            }
+
+            mapper.Map(paper, paperEntity);
+            userService.UpdatePaper(paperEntity);
+            await userService.SaveAsync();
+
+            var returnDto = mapper.Map<PaperDto>(paperEntity);
+
+            return Ok(returnDto);
+        }
         [HttpOptions]
         public IActionResult GetOptions()
         {
-            Response.Headers.Add("Allow","GET,POST,OPTIONS");
+            Response.Headers.Add("Allow","GET,POST,OPTIONS,PUT");
             return Ok();
         }
     }

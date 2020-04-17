@@ -74,6 +74,27 @@ namespace PerPush.Api.Services
             return returnItems;
 
         }
-        
+        public async Task<Paper> GetPublicPaperAsync(Guid userId, Guid paperId)
+        {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(userId));
+            }
+            if (paperId == Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(paperId));
+            }
+
+            var paper =  await context.papers
+                .Where(x => x.UserId == userId && x.Id == paperId && x.Auth == true)
+                .SingleOrDefaultAsync();
+
+            paper.Author = await context.users
+                .Where(x => x.Id == paper.UserId)
+                .SingleOrDefaultAsync();
+
+            return paper;
+        }
+
     }
 }

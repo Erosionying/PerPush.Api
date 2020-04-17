@@ -24,8 +24,8 @@ namespace PerPush.Api.Models
         //Account user name
         public string Email { get; set; }
         //Account password
-        [Required]
-        [StringLength(32, MinimumLength = 6)]
+        [Required, Display(Name = "password")]
+        [StringLength(32, MinimumLength = 6,ErrorMessage = "The minimum length of the {0} is {2}")]
         public string password { get; set; }
 
 
