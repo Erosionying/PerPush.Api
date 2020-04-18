@@ -212,6 +212,24 @@ namespace PerPush.Api.Controllers
             var returnDto = mapper.Map<PaperDto>(paperEntity);
             return Ok(returnDto);
         }
+        [HttpDelete("paper/{paperId}")]
+        public async Task<IActionResult> DeletePaper(Guid userId, Guid paperId)
+        {
+            if(! await userService.UserExistsAsync(userId))
+            {
+                return NotFound();
+            }
+            var paperEntity = await userService.GetPaperAsync(userId, paperId);
+            if (paperEntity == null)
+            {
+                return NotFound();
+            }
+
+            userService.DeletePaper(paperEntity);
+            await userService.SaveAsync();
+
+            return NoContent();
+        }
         [HttpOptions]
         public IActionResult GetOptions()
         {
