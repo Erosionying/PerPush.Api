@@ -7,6 +7,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Serialization;
 using PerPush.Api.Data;
 using PerPush.Api.Models;
 using PerPush.Api.Services;
@@ -35,13 +37,42 @@ namespace PerPush.Api
             services.AddControllers(setup =>
             {
                 setup.ReturnHttpNotAcceptable = true;
-            }).AddXmlDataContractSerializerFormatters();
+            }).AddNewtonsoftJson(setup =>
+            {
+                setup.SerializerSettings.ContractResolver = 
+                new CamelCasePropertyNamesContractResolver();
+            }).AddXmlDataContractSerializerFormatters()
+            .ConfigureApiBehaviorOptions(setup =>
+            {
+                setup.InvalidModelStateResponseFactory = context =>
+                {
+                    var problemDetails = new ValidationProblemDetails(context.ModelState)
+                    {
+                        Title = "Encountered an error!",
+                        Status = StatusCodes.Status422UnprocessableEntity,
+                        Instance = context.HttpContext.Request.Path
 
+                    };
+                    problemDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
+
+                    return new UnprocessableEntityObjectResult(problemDetails)
+                    {
+                        ContentTypes = { "application/problem+json" }
+                    };
+                };
+            });
+            
             services.AddDbContext<PerPushDbContext>(options =>
             {
                 options.UseSqlServer(Configuration.GetConnectionString("Localteststring"));
             });
 
+            /*
+            services.AddHsts(options =>
+            {
+                
+            });
+                */
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IPaperService, PaperService>();
             services.AddScoped<IAuthenticateService, TokenAuthenticationService>();

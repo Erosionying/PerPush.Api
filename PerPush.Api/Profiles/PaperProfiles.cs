@@ -16,6 +16,7 @@ namespace PerPush.Api.Profiles
                 .ForMember(dest => dest.Author, opt => opt.MapFrom(src => src.Author.NickName));
             CreateMap<PaperAddDto, Paper>();
             CreateMap<PaperUpdateDto, Paper>();
+            CreateMap<Paper, PaperUpdateDto>();
             CreateMap<Paper, PaperBriefDetailDto>()
                 .ForMember(dest => dest.Author, opt=>opt.MapFrom(src => src.Author.NickName));
         }

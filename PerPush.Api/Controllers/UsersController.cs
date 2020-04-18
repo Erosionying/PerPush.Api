@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using PerPush.Api.Entities;
 using PerPush.Api.Helpers;
 using PerPush.Api.Models;
@@ -15,7 +17,7 @@ namespace PerPush.Api.Controllers
 {
     [Route("api/user/{userId}")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class UsersController:ControllerBase
     {
         private readonly IUserService userService;
@@ -97,7 +99,38 @@ namespace PerPush.Api.Controllers
 
             return Ok(userDto);
         }
-        
+        [HttpPatch("center")]
+        public async Task<ActionResult<UserDto>> PartiallyUpdateUserInfo(
+            [FromRoute] Guid userId
+            ,JsonPatchDocument<UserUpdateDto> patchDocument)
+        {
+            
+            var userEntity = await userService.GetUserInfoAsync(userId);
+
+            if(userEntity == null)
+            {
+                return NotFound();
+            }
+
+            var userPatchDto = mapper.Map<UserUpdateDto>(userEntity);
+            patchDocument.ApplyTo(userPatchDto, ModelState);
+
+            if(!TryValidateModel(userPatchDto))
+            {
+                return ValidationProblem(ModelState);
+            }
+
+            mapper.Map(userPatchDto, userEntity);
+            userService.UpdateUserInfo(userEntity);
+            await userService.SaveAsync();
+
+
+            var returnDto = mapper.Map<UserDto>(userEntity);
+            return Ok(returnDto);
+
+        }
+
+        // Create the paper
         [HttpPost("paper")]
         public async Task<ActionResult<PaperDto>> CreatePaper([FromRoute]Guid userId,PaperAddDto paperAddDto)
         {
@@ -119,6 +152,8 @@ namespace PerPush.Api.Controllers
             return CreatedAtRoute(nameof(GetPrivatePapersForUser), new { userId, paperId = returnDto.Id }, returnDto);
 
         }
+
+        //
         [HttpPut("paper/{paperId}")]
         public async Task<ActionResult<PaperDto>> UpdatePaper(
             [FromRoute]Guid userId,
@@ -145,11 +180,52 @@ namespace PerPush.Api.Controllers
 
             return Ok(returnDto);
         }
+        [HttpPatch("paper/{paperId}")]
+        public async Task<ActionResult<PaperDto>> PartiallyUpdatePaper(
+            Guid userId, 
+            Guid paperId, 
+            JsonPatchDocument<PaperUpdateDto> patchDocument)
+        {
+            if(!await userService.UserExistsAsync(userId))
+            {
+                return NotFound();
+            }
+            var paperEntity = await userService.GetPaperAsync(userId, paperId);
+            if(paperEntity == null)
+            {
+                return NotFound();
+            }
+
+            var paperPatchDto =  mapper.Map<PaperUpdateDto>(paperEntity);
+
+            patchDocument.ApplyTo(paperPatchDto, ModelState);
+
+            if(!TryValidateModel(paperPatchDto))
+            {
+                return ValidationProblem(ModelState);
+            }
+
+            mapper.Map(paperPatchDto, paperEntity);
+            userService.UpdatePaper(paperEntity);
+            await userService.SaveAsync();
+
+            var returnDto = mapper.Map<PaperDto>(paperEntity);
+            return Ok(returnDto);
+        }
         [HttpOptions]
         public IActionResult GetOptions()
         {
-            Response.Headers.Add("Allow","GET,POST,OPTIONS,PUT");
+            Response.Headers.Add("Allow","GET,POST,OPTIONS,PUT,PATCH");
             return Ok();
+        }
+
+        public override ActionResult ValidationProblem(
+            ModelStateDictionary modelStateDictionary)
+        {
+            var options = HttpContext.RequestServices
+                .GetRequiredService<IOptions<ApiBehaviorOptions>>();
+
+            return (ActionResult)options.Value.InvalidModelStateResponseFactory(ControllerContext);
         }
     }
 }
