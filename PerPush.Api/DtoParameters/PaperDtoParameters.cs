@@ -15,9 +15,7 @@ namespace PerPush.Api.DtoParameters
 
         public string Title { get; set; }
         public string Lable { get; set; }
-        /// <summary>
-        /// 搜索条件
-        /// </summary>
+        
         public string SearchTerm { get; set; }
 
         private int pageNumber = defaultNumber;

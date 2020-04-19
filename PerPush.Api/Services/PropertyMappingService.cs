@@ -41,5 +41,26 @@ namespace PerPush.Api.Services
 
             throw new Exception($"No unique mapping relationship found!{typeof(TSource)},{typeof(TDestination)}");
         }
+        public bool ValidMappingExists<TSource, TDestination>(string fields)
+        {
+            var propertyMapping = GetPropertyMapping<TSource, TDestination>();
+            if(string.IsNullOrWhiteSpace(fields))
+            {
+                return true;
+            }
+            var fieldAfterSplit = fields.Split(",");
+            foreach(var field in fieldAfterSplit)
+            {
+                var trimmedField = field.Trim();
+                var indexOfFirstSpace = trimmedField.IndexOf(" ", StringComparison.Ordinal);
+                var propertyName = indexOfFirstSpace == -1 ? trimmedField : trimmedField.Remove(indexOfFirstSpace);
+
+                if(!propertyMapping.ContainsKey(propertyName))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }

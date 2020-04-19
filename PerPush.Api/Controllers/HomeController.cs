@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using PerPush.Api.DtoParameters;
+using PerPush.Api.Entities;
 using PerPush.Api.Helpers;
 using PerPush.Api.Models;
 using PerPush.Api.Services;
@@ -21,16 +22,22 @@ namespace PerPush.Api.Controllers
         private readonly IMapper mapper;
         private readonly IPropertyMappingService propertyMappingService;
 
-        public HomeController(IPaperService paperService, IMapper mapper)
+        public HomeController(IPaperService paperService, IMapper mapper, IPropertyMappingService propertyMappingService)
         {
             this.paperService = paperService ?? throw new ArgumentNullException(nameof(paperService));
             this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            this.propertyMappingService = propertyMappingService ??
+                throw new ArgumentNullException(nameof(propertyMappingService));
         }
         //Home Inforamtion
         [HttpGet(Name = nameof(GetBriefPapers))]
         [HttpHead]
         public async Task<ActionResult<IEnumerable<PaperBriefDetailDto>>> GetBriefPapers([FromQuery] PaperDtoParameters paperDtoParameters)
         {
+            if(!propertyMappingService.ValidMappingExists<PaperDto, Paper>(paperDtoParameters.OrderBy))
+            {
+                return BadRequest();
+            }
             var papers = await paperService.GetPapersAsync(paperDtoParameters);
 
             var previousLink = papers.HasPrevious ? 
@@ -79,6 +86,7 @@ namespace PerPush.Api.Controllers
                 case ResourceUriType.PreviousPage:
                     return Url.Link(nameof(GetBriefPapers), new
                     {
+                        orderBy = parameters.OrderBy,
                         pageNumber = parameters.PageNumber - 1,
                         pageSize = parameters.PageSize,
                         title = parameters.Title,
@@ -88,6 +96,7 @@ namespace PerPush.Api.Controllers
                 case ResourceUriType.NextPage:
                     return Url.Link(nameof(GetBriefPapers), new
                     {
+                        orderBy = parameters.OrderBy,
                         pageNumber = parameters.PageNumber + 1,
                         pageSize = parameters.PageSize,
                         title = parameters.Title,
@@ -97,6 +106,7 @@ namespace PerPush.Api.Controllers
                 default:
                     return Url.Link(nameof(GetBriefPapers), new
                     {
+                        orderBy = parameters.OrderBy,
                         pageNumber = parameters.PageNumber + 1,
                         pageSize = parameters.PageSize,
                         title = parameters.Title,
