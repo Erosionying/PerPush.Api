@@ -20,6 +20,7 @@ namespace PerPush.Api.Controllers
             this.authenticateService = authenticateService ?? 
                 throw new ArgumentNullException(nameof(authenticateService));
         }
+        //Get Token / Login
         [AllowAnonymous]
         [HttpPost, Route("requesToken",Name = nameof(RequestToken))]
         public ActionResult RequestToken([FromBody] LoginRequestDto request)

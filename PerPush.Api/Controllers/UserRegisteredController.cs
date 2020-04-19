@@ -22,6 +22,7 @@ namespace PerPush.Api.Controllers
             this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             this.userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
+        //Unauthorized users view author information
         [HttpGet(Name = nameof(GetUserInfo))]
         public async Task<ActionResult<UserDto>> GetUserInfo([FromRoute]Guid userId)
         {
@@ -31,6 +32,7 @@ namespace PerPush.Api.Controllers
 
             return Ok(userDto);
         }
+        //registered Account
         [HttpPost]
         public async Task<ActionResult<UserDto>> RegisteredAccount([FromBody] UserRegisteredDto userRegisteredDto)
         {

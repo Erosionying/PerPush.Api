@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using PerPush.Api.DtoParameters;
 using PerPush.Api.Models;
 using PerPush.Api.Services;
 using System;
@@ -25,16 +26,18 @@ namespace PerPush.Api.Controllers
         }
         
         [HttpGet("papers")]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPublicPapersForUser(Guid userId)
+        public async Task<ActionResult<IEnumerable<PaperBriefDetailDto>>> GetPublicPapersForUser(
+            Guid userId,
+            [FromQuery]PaperDtoParameters parameters)
         {
             if (!await userService.UserExistsAsync(userId))
             {
                 return NotFound();
             }
 
-            var papers = await userService.GetUserPublicPaperAsync(userId);
+            var papers = await userService.GetUserPublicPaperAsync(userId, parameters);
 
-            var paperDtos = mapper.Map<IEnumerable<PaperDto>>(papers);
+            var paperDtos = mapper.Map<IEnumerable<PaperBriefDetailDto>>(papers);
 
             return Ok(paperDtos);
 

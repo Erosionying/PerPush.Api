@@ -25,9 +25,10 @@ namespace PerPush.Api.Controllers
             this.paperService = paperService ?? throw new ArgumentNullException(nameof(paperService));
             this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
+        //Home Inforamtion
         [HttpGet(Name = nameof(GetBriefPapers))]
         [HttpHead]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetBriefPapers([FromQuery] PaperDtoParameters paperDtoParameters)
+        public async Task<ActionResult<IEnumerable<PaperBriefDetailDto>>> GetBriefPapers([FromQuery] PaperDtoParameters paperDtoParameters)
         {
             var papers = await paperService.GetPapersAsync(paperDtoParameters);
 
@@ -55,6 +56,7 @@ namespace PerPush.Api.Controllers
 
             return Ok(papersDto);
         }
+        // Brower Paper 
         [HttpGet("{userId}/paper/{paperId}")]
         public async Task<ActionResult<PaperDto>> GetPaper(Guid userId, Guid paperId)
         {

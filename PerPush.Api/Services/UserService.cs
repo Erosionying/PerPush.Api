@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PerPush.Api.Data;
+using PerPush.Api.DtoParameters;
 using PerPush.Api.Entities;
+using PerPush.Api.Helpers;
 using PerPush.Api.Models;
 using System;
 using System.Collections.Generic;
@@ -30,16 +32,55 @@ namespace PerPush.Api.Services
 
             return userInfo;
         }
-        public async Task<IEnumerable<Paper>> GetUserPrivatePapersAsync(Guid userId)
+        public async Task<IEnumerable<Paper>> GetUserPrivatePapersAsync(Guid userId, PaperDtoParameters parameters)
         {
             if (userId == Guid.Empty)
             {
                 throw new ArgumentNullException(nameof(userId));
             }
-            return await context.papers
+            if(parameters == null)
+            {
+                return await context.papers
                 .Where(x => x.UserId == userId && x.Auth == false)
                 .OrderBy(x => x.StartTime)
                 .ToListAsync();
+            }
+
+            var items = context.papers as IQueryable<Paper>;
+            items = items.Where(x => x.UserId == userId && x.Auth == false);
+
+            if(!string.IsNullOrWhiteSpace(parameters.Title))
+            {
+                parameters.Title = parameters.Title.Trim();
+                items = items.Where(x => x.Title.Contains(parameters.Title));
+            }
+
+            if(!string.IsNullOrWhiteSpace(parameters.Lable))
+            {
+                parameters.Lable = parameters.Lable.Trim();
+                items = items.Where(x => x.Lable.Contains(parameters.Lable));
+            }
+
+            if(!string.IsNullOrWhiteSpace(parameters.SearchTerm))
+            {
+                parameters.SearchTerm = parameters.SearchTerm.Trim();
+                items = items.Where(x => x.Title.Contains(parameters.SearchTerm) ||
+                x.Description.Contains(parameters.SearchTerm) ||
+                x.Lable.Contains(parameters.SearchTerm));
+            }
+
+            var returnItems = await PagedList<Paper>.CreateAsync(items, parameters.PageNumber, parameters.PageSize);
+
+            //Take the Data From DataBase
+            foreach (var paper in returnItems)
+            {
+                paper.Author = await context.users
+                    .Where(x => x.Id == paper.UserId)
+                    .FirstOrDefaultAsync();
+            }
+
+            return returnItems;
+
         }
         public async Task<IEnumerable<Paper>> GetUserPrivatePapersAsync(Guid userId, IEnumerable<Guid> papersId)
         {
@@ -57,18 +98,54 @@ namespace PerPush.Api.Services
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId)
+        public async Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId, PaperDtoParameters parameters)
         {
             if (userId == Guid.Empty)
             {
                 throw new ArgumentNullException(nameof(userId));
             }
-            var papers = await context.papers
+            if (parameters == null)
+            {
+                return await context.papers
                 .Where(x => x.UserId == userId && x.Auth == true)
-                .OrderBy(x =>x.StartTime)
+                .OrderBy(x => x.StartTime)
                 .ToListAsync();
+            }
 
-            return papers;
+            var items = context.papers as IQueryable<Paper>;
+            items = items.Where(x => x.UserId == userId && x.Auth == true);
+
+            if (!string.IsNullOrWhiteSpace(parameters.Title))
+            {
+                parameters.Title = parameters.Title.Trim();
+                items = items.Where(x => x.Title.Contains(parameters.Title));
+            }
+
+            if (!string.IsNullOrWhiteSpace(parameters.Lable))
+            {
+                parameters.Lable = parameters.Lable.Trim();
+                items = items.Where(x => x.Lable.Contains(parameters.Lable));
+            }
+
+            if (!string.IsNullOrWhiteSpace(parameters.SearchTerm))
+            {
+                parameters.SearchTerm = parameters.SearchTerm.Trim();
+                items = items.Where(x => x.Title.Contains(parameters.SearchTerm) ||
+                x.Description.Contains(parameters.SearchTerm) ||
+                x.Lable.Contains(parameters.SearchTerm));
+            }
+
+            var returnItems = await PagedList<Paper>.CreateAsync(items, parameters.PageNumber, parameters.PageSize);
+
+            //Take the Data From DataBase
+            foreach (var paper in returnItems)
+            {
+                paper.Author = await context.users
+                    .Where(x => x.Id == paper.UserId)
+                    .FirstOrDefaultAsync();
+            }
+
+            return returnItems;
         }
         public async Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId, IEnumerable<Guid> papersId)
         {

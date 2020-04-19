@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using PerPush.Api.DtoParameters;
 using PerPush.Api.Entities;
 using PerPush.Api.Helpers;
 using PerPush.Api.Models;
@@ -28,12 +30,35 @@ namespace PerPush.Api.Controllers
             this.userService = userService ?? throw new ArgumentNullException(nameof(userService));
             this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
+        //Get all public articles under the user name
+        [HttpGet("pubpapers", Name = nameof(GetUserPublicPapers))]
+        public async Task<ActionResult<IEnumerable<PaperBriefDetailDto>>> GetUserPublicPapers(
+            Guid userId,
+            [FromQuery] PaperDtoParameters parameters)
+        {
+            if (!await userService.UserExistsAsync(userId))
+            {
+                return NotFound();
+            }
+            
+            var papers = await userService.GetUserPublicPaperAsync(userId, parameters);
 
+            if(papers == null)
+            {
+                return NoContent();
+            }
+                var paperDtos = mapper.Map<IEnumerable<PaperBriefDetailDto>>(papers);
+
+                return Ok(paperDtos);
+            
+        }
+        //Use resource ID collection to query public resources
         [HttpGet("pubpapers/{paperIds}",Name = nameof(GetPublicPapersForUser))]
         public async Task<ActionResult<IEnumerable<PaperDto>>> GetPublicPapersForUser(Guid userId,
             [FromRoute]
             [ModelBinder(BinderType = typeof(ArrayModelBinder))]
-            IEnumerable<Guid> paperIds)
+            IEnumerable<Guid> paperIds,
+            [FromQuery] PaperDtoParameters parameters = null)
         {
             if (!await userService.UserExistsAsync(userId))
             {
@@ -41,7 +66,7 @@ namespace PerPush.Api.Controllers
             }
             if(paperIds == null)
             {
-                var papers = await userService.GetUserPublicPaperAsync(userId);
+                var papers = await userService.GetUserPublicPaperAsync(userId, parameters);
 
                 var paperDtos = mapper.Map<IEnumerable<PaperDto>>(papers);
 
@@ -57,14 +82,37 @@ namespace PerPush.Api.Controllers
             var returnDto = mapper.Map<IEnumerable<PaperDto>>(entities);
 
             return Ok(returnDto);
-            
-
+           
         }
-        [HttpGet("pripapers/{paperIds}",Name = nameof(GetPrivatePapersForUser))]
+        //Get all private articles under the user name
+        [HttpGet("pripapers", Name = nameof(GetUserPrivatePapers))]
+        public async Task<ActionResult<IEnumerable<PaperBriefDetailDto>>> GetUserPrivatePapers(Guid userId,
+            [FromQuery] PaperDtoParameters parameters)
+        {
+            if (!await userService.UserExistsAsync(userId))
+            {
+                return NotFound();
+            }
+            
+            var papers = await userService.GetUserPrivatePapersAsync(userId, parameters);
+
+            if(papers == null)
+            {
+                return NoContent();
+            }
+
+            var paperDtos = mapper.Map<IEnumerable<PaperBriefDetailDto>>(papers);
+
+            return Ok(paperDtos);
+            
+        }
+        //Use resource ID collection to query private resources
+        [HttpGet("pripapers/{paperIds}", Name = nameof(GetPrivatePapersForUser))]
         public async Task<ActionResult<IEnumerable<PaperDto>>> GetPrivatePapersForUser(Guid userId,
             [FromRoute]
             [ModelBinder(BinderType = typeof(ArrayModelBinder))]
-            IEnumerable<Guid> paperIds)
+            IEnumerable<Guid> paperIds,
+            [FromQuery] PaperDtoParameters parameters = null)
         {
             if(!await userService.UserExistsAsync(userId))
             {
@@ -72,9 +120,9 @@ namespace PerPush.Api.Controllers
             }
             if(paperIds == null)
             {
-                var papers = await userService.GetUserPrivatePapersAsync(userId);
+                var papers = await userService.GetUserPrivatePapersAsync(userId, parameters);
 
-                var paperDtos = mapper.Map<IEnumerable<PaperDto>>(papers);
+                var paperDtos = mapper.Map<IEnumerable<PaperBriefDetailDto>>(papers);
 
                 return Ok(paperDtos);
             }
@@ -86,10 +134,11 @@ namespace PerPush.Api.Controllers
                 return NotFound();
             }
 
-            var returnDto = mapper.Map<IEnumerable<PaperDto>>(entities);
+            var returnDto = mapper.Map<IEnumerable<PaperBriefDetailDto>>(entities);
             return Ok(returnDto);
             
         }
+        //Get User Profile Information
         [HttpGet("center")]
         public async Task<ActionResult<UserDto>> GetUserInfo([FromRoute]Guid userId)
         {
@@ -99,6 +148,7 @@ namespace PerPush.Api.Controllers
 
             return Ok(userDto);
         }
+        //Use PatchMethod Update user profile information
         [HttpPatch("center")]
         public async Task<ActionResult<UserDto>> PartiallyUpdateUserInfo(
             [FromRoute] Guid userId
@@ -153,7 +203,7 @@ namespace PerPush.Api.Controllers
 
         }
 
-        //
+        //Update paper
         [HttpPut("paper/{paperId}")]
         public async Task<ActionResult<PaperDto>> UpdatePaper(
             [FromRoute]Guid userId,
@@ -180,6 +230,7 @@ namespace PerPush.Api.Controllers
 
             return Ok(returnDto);
         }
+        //User Patch Method Update Paper Detail
         [HttpPatch("paper/{paperId}")]
         public async Task<ActionResult<PaperDto>> PartiallyUpdatePaper(
             Guid userId, 
@@ -212,6 +263,7 @@ namespace PerPush.Api.Controllers
             var returnDto = mapper.Map<PaperDto>(paperEntity);
             return Ok(returnDto);
         }
+        //Remove Paper
         [HttpDelete("paper/{paperId}")]
         public async Task<IActionResult> DeletePaper(Guid userId, Guid paperId)
         {
@@ -230,13 +282,14 @@ namespace PerPush.Api.Controllers
 
             return NoContent();
         }
+        //Get Options
         [HttpOptions]
         public IActionResult GetOptions()
         {
             Response.Headers.Add("Allow","GET,POST,OPTIONS,PUT,PATCH");
             return Ok();
         }
-
+        //Model verification
         public override ActionResult ValidationProblem(
             ModelStateDictionary modelStateDictionary)
         {
