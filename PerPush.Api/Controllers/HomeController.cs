@@ -19,6 +19,7 @@ namespace PerPush.Api.Controllers
     {
         private readonly IPaperService paperService;
         private readonly IMapper mapper;
+        private readonly IPropertyMappingService propertyMappingService;
 
         public HomeController(IPaperService paperService, IMapper mapper)
         {

@@ -3,6 +3,7 @@ using PerPush.Api.Data;
 using PerPush.Api.DtoParameters;
 using PerPush.Api.Entities;
 using PerPush.Api.Helpers;
+using PerPush.Api.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,11 +14,14 @@ namespace PerPush.Api.Services
     public class PaperService : IPaperService
     {
         private readonly PerPushDbContext context;
+        private readonly IPropertyMappingService propertyMappingService;
 
-        public PaperService(PerPushDbContext context)
+        public PaperService(PerPushDbContext context, IPropertyMappingService propertyMappingService)
         {
             this.context = context ?? 
                 throw new ArgumentNullException(nameof(context));
+            this.propertyMappingService = propertyMappingService ?? 
+                throw new ArgumentNullException(nameof(propertyMappingService));
         }
         public async Task<PagedList<Paper>> GetPapersAsync(PaperDtoParameters paperDtoParameters)
         {
@@ -25,23 +29,6 @@ namespace PerPush.Api.Services
             {
                 throw new ArgumentNullException(nameof(paperDtoParameters));
             }
-            /*
-            //If the query parameter is empty, return normally
-            if (string.IsNullOrWhiteSpace(paperDtoParameters.Lable) && 
-                string.IsNullOrWhiteSpace(paperDtoParameters.Title))
-            {
-                var papers = await context.papers
-                    .Where(x => x.Auth == true)
-                    .ToListAsync();
-                foreach (var paper in papers)
-                {
-                    paper.Author = await context.users
-                        .Where(x => x.Id == paper.UserId)
-                        .FirstOrDefaultAsync();
-                }
-                return papers;
-            }*/
-
             var items = context.papers as IQueryable<Paper>;
 
             if (!string.IsNullOrWhiteSpace(paperDtoParameters.Title))
@@ -65,13 +52,12 @@ namespace PerPush.Api.Services
                     x.Description.Contains(paperDtoParameters.SearchTerm) ||
                     x.Lable.Contains(paperDtoParameters.Lable));
             }
-            /*
-            items = items.Skip(paperDtoParameters.PageSize * (paperDtoParameters.PageNumber - 1))
-                .Take(paperDtoParameters.PageSize);
 
-            items = items.Where(x => x.Auth == true);
-            var returnItems = await items.OrderBy(x => x.StartTime).ToListAsync();
-            */
+            //Get Mapping relations
+            var mappingDictionary = propertyMappingService.GetPropertyMapping<PaperDto, Paper>();
+            //Order By
+            items = items.ApplySort(paperDtoParameters.OrderBy, mappingDictionary);
+            
             var returnItems = await PagedList<Paper>.CreateAsync(items, paperDtoParameters.PageNumber, paperDtoParameters.PageSize);
 
             //Take the Data From DataBase

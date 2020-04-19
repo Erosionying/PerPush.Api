@@ -14,11 +14,14 @@ namespace PerPush.Api.Services
     public class UserService : IUserService
     {
         private readonly PerPushDbContext context;
+        private readonly IPropertyMappingService propertyMappingService;
 
-        public UserService(PerPushDbContext context)
+        public UserService(PerPushDbContext context, IPropertyMappingService propertyMappingService)
         {
             this.context = context ?? 
                 throw new ArgumentNullException(nameof(context));
+            this.propertyMappingService = propertyMappingService ??
+                throw new ArgumentNullException(nameof(propertyMappingService));
         }
 
         public async Task<User> GetUserInfoAsync(Guid userId)
@@ -38,13 +41,7 @@ namespace PerPush.Api.Services
             {
                 throw new ArgumentNullException(nameof(userId));
             }
-            if(parameters == null)
-            {
-                return await context.papers
-                .Where(x => x.UserId == userId && x.Auth == false)
-                .OrderBy(x => x.StartTime)
-                .ToListAsync();
-            }
+            
 
             var items = context.papers as IQueryable<Paper>;
             items = items.Where(x => x.UserId == userId && x.Auth == false);
@@ -68,6 +65,12 @@ namespace PerPush.Api.Services
                 x.Description.Contains(parameters.SearchTerm) ||
                 x.Lable.Contains(parameters.SearchTerm));
             }
+
+            //var user = context.papers.First(x => x.Likes == 5).Author;
+            
+            var mappingDictionary = propertyMappingService.GetPropertyMapping<PaperDto, Paper>();
+            items = items.ApplySort(parameters.OrderBy, mappingDictionary);
+            //var papers = items.ToListAsync();
 
             var returnItems = await PagedList<Paper>.CreateAsync(items, parameters.PageNumber, parameters.PageSize);
 
@@ -104,13 +107,14 @@ namespace PerPush.Api.Services
             {
                 throw new ArgumentNullException(nameof(userId));
             }
+            /*
             if (parameters == null)
             {
                 return await context.papers
                 .Where(x => x.UserId == userId && x.Auth == true)
                 .OrderBy(x => x.StartTime)
                 .ToListAsync();
-            }
+            }*/
 
             var items = context.papers as IQueryable<Paper>;
             items = items.Where(x => x.UserId == userId && x.Auth == true);
@@ -134,6 +138,10 @@ namespace PerPush.Api.Services
                 x.Description.Contains(parameters.SearchTerm) ||
                 x.Lable.Contains(parameters.SearchTerm));
             }
+            //Get Mapping relations
+            var mappingDictionary = propertyMappingService.GetPropertyMapping<PaperDto, Paper>();
+            //Order By
+            items = items.ApplySort(parameters.OrderBy, mappingDictionary);
 
             var returnItems = await PagedList<Paper>.CreateAsync(items, parameters.PageNumber, parameters.PageSize);
 

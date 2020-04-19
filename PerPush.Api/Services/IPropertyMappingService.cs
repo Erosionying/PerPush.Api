@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 namespace PerPush.Api.Services
 {
-    public class ParameterVerifyService:IParameterVerifyService
+    public interface IPropertyMappingService
     {
-
+        Dictionary<string, PropertyMappingValue> GetPropertyMapping<TSource, TDestination>();
     }
 }
