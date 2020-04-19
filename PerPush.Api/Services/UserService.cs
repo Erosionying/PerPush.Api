@@ -53,7 +53,7 @@ namespace PerPush.Api.Services
             }
             return await context.papers
                 .Where(x => x.UserId == userId && x.Auth == false && papersId.Contains(x.Id))
-                .OrderBy(x => x.Title)
+                .OrderBy(x => x.StartTime)
                 .ToListAsync();
         }
 
@@ -65,6 +65,7 @@ namespace PerPush.Api.Services
             }
             var papers = await context.papers
                 .Where(x => x.UserId == userId && x.Auth == true)
+                .OrderBy(x =>x.StartTime)
                 .ToListAsync();
 
             return papers;
@@ -81,7 +82,7 @@ namespace PerPush.Api.Services
             }
             return await context.papers
                 .Where(x => x.UserId == userId && x.Auth == true && papersId.Contains(x.Id))
-                .OrderBy(x => x.Title)
+                .OrderBy(x => x.StartTime)
                 .ToListAsync();
         }
         

@@ -20,6 +20,11 @@ namespace PerPush.Api.Services
         }
         public async Task<IEnumerable<Paper>> GetPapersAsync(PaperDtoParameters paperDtoParameters)
         {
+            if(paperDtoParameters == null)
+            {
+                throw new ArgumentNullException(nameof(paperDtoParameters));
+            }
+            /*
             //If the query parameter is empty, return normally
             if (string.IsNullOrWhiteSpace(paperDtoParameters.Lable) && 
                 string.IsNullOrWhiteSpace(paperDtoParameters.Title))
@@ -34,7 +39,7 @@ namespace PerPush.Api.Services
                         .FirstOrDefaultAsync();
                 }
                 return papers;
-            }
+            }*/
 
             var items = context.papers as IQueryable<Paper>;
 
@@ -59,6 +64,9 @@ namespace PerPush.Api.Services
                     x.Description.Contains(paperDtoParameters.SearchTerm) ||
                     x.Lable.Contains(paperDtoParameters.Lable));
             }
+
+            items = items.Skip(paperDtoParameters.PageSize * (paperDtoParameters.PageNumber - 1))
+                .Take(paperDtoParameters.PageSize);
 
             items = items.Where(x => x.Auth == true);
             var returnItems = await items.OrderBy(x => x.StartTime).ToListAsync();
