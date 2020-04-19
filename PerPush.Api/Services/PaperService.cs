@@ -2,6 +2,7 @@
 using PerPush.Api.Data;
 using PerPush.Api.DtoParameters;
 using PerPush.Api.Entities;
+using PerPush.Api.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace PerPush.Api.Services
             this.context = context ?? 
                 throw new ArgumentNullException(nameof(context));
         }
-        public async Task<IEnumerable<Paper>> GetPapersAsync(PaperDtoParameters paperDtoParameters)
+        public async Task<PagedList<Paper>> GetPapersAsync(PaperDtoParameters paperDtoParameters)
         {
             if(paperDtoParameters == null)
             {
@@ -64,12 +65,14 @@ namespace PerPush.Api.Services
                     x.Description.Contains(paperDtoParameters.SearchTerm) ||
                     x.Lable.Contains(paperDtoParameters.Lable));
             }
-
+            /*
             items = items.Skip(paperDtoParameters.PageSize * (paperDtoParameters.PageNumber - 1))
                 .Take(paperDtoParameters.PageSize);
 
             items = items.Where(x => x.Auth == true);
             var returnItems = await items.OrderBy(x => x.StartTime).ToListAsync();
+            */
+            var returnItems = await PagedList<Paper>.CreateAsync(items, paperDtoParameters.PageNumber, paperDtoParameters.PageSize);
 
             //Take the Data From DataBase
             foreach (var paper in returnItems)
