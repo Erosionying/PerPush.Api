@@ -21,20 +21,30 @@ namespace PerPush.Api.Controllers
         private readonly IPaperService paperService;
         private readonly IMapper mapper;
         private readonly IPropertyMappingService propertyMappingService;
+        private readonly IPropertyCheckerService propertyCheckerService;
 
-        public HomeController(IPaperService paperService, IMapper mapper, IPropertyMappingService propertyMappingService)
+        public HomeController(IPaperService paperService, 
+            IMapper mapper, 
+            IPropertyMappingService propertyMappingService,
+            IPropertyCheckerService propertyCheckerService)
         {
             this.paperService = paperService ?? throw new ArgumentNullException(nameof(paperService));
             this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             this.propertyMappingService = propertyMappingService ??
                 throw new ArgumentNullException(nameof(propertyMappingService));
+            this.propertyCheckerService = propertyCheckerService ?? 
+                throw new ArgumentNullException(nameof(propertyCheckerService));
         }
         //Home Inforamtion
         [HttpGet(Name = nameof(GetBriefPapers))]
         [HttpHead]
-        public async Task<ActionResult<IEnumerable<PaperBriefDetailDto>>> GetBriefPapers([FromQuery] PaperDtoParameters paperDtoParameters)
+        public async Task<IActionResult> GetBriefPapers([FromQuery] PaperDtoParameters paperDtoParameters)
         {
             if(!propertyMappingService.ValidMappingExists<PaperDto, Paper>(paperDtoParameters.OrderBy))
+            {
+                return BadRequest();
+            }
+            if(!propertyCheckerService.TypeHasProperties<PaperDto>(paperDtoParameters.fields))
             {
                 return BadRequest();
             }
@@ -66,8 +76,12 @@ namespace PerPush.Api.Controllers
         }
         // Brower Paper 
         [HttpGet("{userId}/paper/{paperId}")]
-        public async Task<ActionResult<PaperDto>> GetPaper(Guid userId, Guid paperId)
+        public async Task<ActionResult<PaperDto>> GetPaper(Guid userId, Guid paperId, [FromQuery] string fields)
         {
+            if (!propertyCheckerService.TypeHasProperties<PaperDto>(fields))
+            {
+                return BadRequest();
+            }
             var paperEntity = await paperService.GetPublicPaperAsync(userId, paperId);
             if(paperEntity == null)
             {
@@ -76,7 +90,7 @@ namespace PerPush.Api.Controllers
 
             var returnDto = mapper.Map<PaperDto>(paperEntity);
 
-            return Ok(returnDto);
+            return Ok(returnDto.ShapeData(fields));
         }
 
         private string CreatePapersResourceUri(PaperDtoParameters parameters,ResourceUriType type)

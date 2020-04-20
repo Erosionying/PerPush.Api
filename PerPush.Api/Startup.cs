@@ -78,6 +78,7 @@ namespace PerPush.Api
             services.AddScoped<IAuthenticateService, TokenAuthenticationService>();
 
             services.AddTransient<IPropertyMappingService, PropertyMappingService>();
+            services.AddTransient<IPropertyCheckerService, PropertyCheckerService>();
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
