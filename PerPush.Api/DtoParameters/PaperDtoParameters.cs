@@ -31,7 +31,7 @@ namespace PerPush.Api.DtoParameters
             get =>  pageSize;
             set => pageSize = value > MaxSize ? MaxSize : value;
         }
-
+        public string fields { get; set; }
         public string OrderBy { get; set; } = "startTime";
 
     }
