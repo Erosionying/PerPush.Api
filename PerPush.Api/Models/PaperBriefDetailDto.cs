@@ -11,7 +11,7 @@ namespace PerPush.Api.Models
         public Guid UserId { get; set; }
 
         public string Title { get; set; }
-
+        public string Description { get; set; }
         public string Lable { get; set; }
         public DateTimeOffset StartTime { get; set; }
         public int Visitors { get; set; }
