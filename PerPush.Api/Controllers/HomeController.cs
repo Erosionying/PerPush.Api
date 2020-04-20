@@ -62,7 +62,7 @@ namespace PerPush.Api.Controllers
 
             var papersDto = mapper.Map<IEnumerable<PaperBriefDetailDto>>(papers);
 
-            return Ok(papersDto);
+            return Ok(papersDto.ShapeDate(paperDtoParameters.fields));
         }
         // Brower Paper 
         [HttpGet("{userId}/paper/{paperId}")]
