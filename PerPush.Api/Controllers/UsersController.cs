@@ -53,8 +53,8 @@ namespace PerPush.Api.Controllers
             
         }
         //Use resource ID collection to query public resources
-        [HttpGet("pubpapers/{paperIds}",Name = nameof(GetPublicPapersForUser))]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPublicPapersForUser(Guid userId,
+        [HttpGet("papers/{paperIds}",Name = nameof(GetPublicPapersForUserList))]
+        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPublicPapersForUserList(Guid userId,
             [FromRoute]
             [ModelBinder(BinderType = typeof(ArrayModelBinder))]
             IEnumerable<Guid> paperIds,
@@ -107,8 +107,8 @@ namespace PerPush.Api.Controllers
             
         }
         //Use resource ID collection to query private resources
-        [HttpGet("pripapers/{paperIds}", Name = nameof(GetPrivatePapersForUser))]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPrivatePapersForUser(Guid userId,
+        [HttpGet("pripapers/{paperIds}", Name = nameof(GetPrivatePapersForUserList))]
+        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPrivatePapersForUserList(Guid userId,
             [FromRoute]
             [ModelBinder(BinderType = typeof(ArrayModelBinder))]
             IEnumerable<Guid> paperIds,
@@ -197,9 +197,9 @@ namespace PerPush.Api.Controllers
 
             if(paper.Auth == true)
             {
-                return CreatedAtRoute(nameof(GetPublicPapersForUser), new { userId, paperId = returnDto.Id }, returnDto);
+                return CreatedAtRoute(nameof(GetUserPublicPapers), new { userId }, returnDto);
             }
-            return CreatedAtRoute(nameof(GetPrivatePapersForUser), new { userId, paperId = returnDto.Id }, returnDto);
+            return CreatedAtRoute(nameof(GetUserPrivatePapers), new { userId }, returnDto);
 
         }
 

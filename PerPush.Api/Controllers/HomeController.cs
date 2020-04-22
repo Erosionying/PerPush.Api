@@ -75,8 +75,8 @@ namespace PerPush.Api.Controllers
             return Ok(papersDto.ShapeDate(paperDtoParameters.fields));
         }
         // Brower Paper 
-        [HttpGet("{userId}/paper/{paperId}")]
-        public async Task<ActionResult<PaperDto>> GetPaper(Guid userId, Guid paperId, [FromQuery] string fields)
+        [HttpGet("{userId}/paper/{paperId}",Name = nameof(GetPaper))]
+        public async Task<IActionResult> GetPaper(Guid userId, Guid paperId, [FromQuery] string fields)
         {
             if (!propertyCheckerService.TypeHasProperties<PaperDto>(fields))
             {
@@ -87,10 +87,12 @@ namespace PerPush.Api.Controllers
             {
                 return NotFound();
             }
+            var links = CreateLinkForHome(userId, paperId, fields);
+            var linkedDic = mapper.Map<PaperDto>(paperEntity).ShapeData(fields) as IDictionary<string, object>;
 
-            var returnDto = mapper.Map<PaperDto>(paperEntity);
+            linkedDic.Add("links", links);
 
-            return Ok(returnDto.ShapeData(fields));
+            return Ok(linkedDic);
         }
 
         private string CreatePapersResourceUri(PaperDtoParameters parameters,ResourceUriType type)
@@ -129,6 +131,23 @@ namespace PerPush.Api.Controllers
                     });
 
             }
+        }
+        private IEnumerable<LinkDto> CreateLinkForHome(Guid userId, Guid paperId , string fields)
+        {
+            List<LinkDto> links = new List<LinkDto>();
+            if(string.IsNullOrWhiteSpace(fields))
+            {
+                links.Add(new LinkDto(Url.Link(nameof(GetPaper), new { userId, paperId}),
+                    "self",
+                    "GET"));
+            }else
+            {
+                links.Add(new LinkDto(Url.Link(nameof(GetPaper), new { userId, paperId, fields}),
+                    "self",
+                    "GET"));
+            }
+
+            return links;
         }
     }
 }

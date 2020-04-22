@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using PerPush.Api.DtoParameters;
+using PerPush.Api.Helpers;
 using PerPush.Api.Models;
 using PerPush.Api.Services;
 using System;
@@ -25,7 +26,7 @@ namespace PerPush.Api.Controllers
             this.userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
         
-        [HttpGet("papers")]
+        [HttpGet("papers",Name = nameof(GetPublicPapersForUser))]
         public async Task<ActionResult<IEnumerable<PaperBriefDetailDto>>> GetPublicPapersForUser(
             Guid userId,
             [FromQuery]PaperDtoParameters parameters)
@@ -43,7 +44,7 @@ namespace PerPush.Api.Controllers
 
         }
         [HttpGet("paper/{paperId}")]
-        public async Task<ActionResult<IEnumerable<PaperDto>>> GetPaperForUser(Guid userId, Guid paperId)
+        public async Task<IActionResult> GetPaperForUser(Guid userId, Guid paperId)
         {
             if (!await userService.UserExistsAsync(userId))
             {
@@ -56,12 +57,14 @@ namespace PerPush.Api.Controllers
                 return NotFound();
             }
 
-            var paperDto = mapper.Map<PaperDto>(paper);
+            var paperDto = mapper.Map<PaperDto>(paper).ShapeData(null) as IDictionary<string, object>;
+            paperDto.Add("links",CreateUrlForPaper(userId, paperId));
+           
 
             return Ok(paperDto);
 
         }
-        [HttpGet]
+        [HttpGet(Name = nameof(GetAuthorInfo))]
         public async Task<ActionResult<UserInfoDto>> GetAuthorInfo(Guid userId)
         {
             if (!await userService.UserExistsAsync(userId))
@@ -75,6 +78,19 @@ namespace PerPush.Api.Controllers
             return Ok(Author);
 
         }
-        
+        private IEnumerable<LinkDto> CreateUrlForPaper(Guid userId, Guid paperId)
+        {
+            List<LinkDto> links = new List<LinkDto>();
+
+            links.Add( new LinkDto (Url.Link(nameof(GetPublicPapersForUser), new { userId }),
+                "self",
+                "GET"));
+
+            links.Add(new LinkDto(Url.Link(nameof(GetAuthorInfo), new { userId }),
+                "Author",
+                "GET"));
+
+            return links;
+        }
     }
 }
