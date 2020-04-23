@@ -71,8 +71,28 @@ namespace PerPush.Api.Controllers
             }));
 
             var papersDto = mapper.Map<IEnumerable<PaperBriefDetailDto>>(papers);
+            var shapeData = papersDto.ShapeDate(paperDtoParameters.fields);
 
-            return Ok(papersDto.ShapeDate(paperDtoParameters.fields));
+            var links = CreateLinkForHome(paperDtoParameters, papers.HasPrevious, papers.HasNext);
+
+            
+            var shapedWithPapers = shapeData.Select(p =>
+            {
+                var paperDic = p as IDictionary<string, object>;
+                var paperLinks = CreateLinkForHome((Guid)paperDic["UserId"], (Guid)paperDic["Id"], null);
+
+                paperDic.Add("links", paperLinks);
+
+                return paperDic;
+            });
+
+            var collectionPaper = new
+            {
+                value = shapedWithPapers,
+                links
+            };
+
+            return Ok(collectionPaper);
         }
         // Brower Paper 
         [HttpGet("{userId}/paper/{paperId}",Name = nameof(GetPaper))]
@@ -123,7 +143,7 @@ namespace PerPush.Api.Controllers
                     return Url.Link(nameof(GetBriefPapers), new
                     {
                         orderBy = parameters.OrderBy,
-                        pageNumber = parameters.PageNumber + 1,
+                        pageNumber = parameters.PageNumber,
                         pageSize = parameters.PageSize,
                         title = parameters.Title,
                         lable = parameters.Lable,
@@ -144,6 +164,29 @@ namespace PerPush.Api.Controllers
             {
                 links.Add(new LinkDto(Url.Link(nameof(GetPaper), new { userId, paperId, fields}),
                     "self",
+                    "GET"));
+            }
+
+            return links;
+        }
+        private IEnumerable<LinkDto> CreateLinkForHome(PaperDtoParameters parameters, bool hasPrevious, bool hasNext)
+        {
+            List<LinkDto> links = new List<LinkDto>();
+            links.Add(new LinkDto(CreatePapersResourceUri(parameters, ResourceUriType.CurrentPage),
+                "self",
+                "GET"));
+
+            if(hasPrevious)
+            {
+                links.Add(new LinkDto(CreatePapersResourceUri(parameters, ResourceUriType.PreviousPage),
+                    "perviousPage",
+                    "GET"));
+            }
+
+            if(hasNext)
+            {
+                links.Add(new LinkDto(CreatePapersResourceUri(parameters, ResourceUriType.NextPage),
+                    "nextPage",
                     "GET"));
             }
 
