@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using PerPush.Api.Attributes;
 using PerPush.Api.DtoParameters;
 using PerPush.Api.Entities;
 using PerPush.Api.Helpers;
@@ -13,12 +14,15 @@ using PerPush.Api.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace PerPush.Api.Controllers
 {
     [Route("api/user/{userId}")]
     [ApiController]
+    [LimitPerMin]
     //[Authorize]
     public class UsersController:ControllerBase
     {
@@ -47,10 +51,48 @@ namespace PerPush.Api.Controllers
             {
                 return NoContent();
             }
-                var paperDtos = mapper.Map<IEnumerable<PaperBriefDetailDto>>(papers);
+            var previousLink = papers.HasPrevious ?
+                CreatePapersResourceUri(nameof(GetUserPublicPapers), parameters, ResourceUriType.PreviousPage) : null;
+            var nextLink = papers.HasNext ?
+                CreatePapersResourceUri(nameof(GetUserPublicPapers), parameters, ResourceUriType.NextPage) : null;
 
-                return Ok(paperDtos);
-            
+            var paginationMetaData = new
+            {
+                currentPage = papers.CurrentPage,
+                pageSize = papers.PageSize,
+                totalPages = papers.TotalPages,
+                totalCount = papers.TotalCount,
+                previousLink,
+                nextLink
+            };
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(paginationMetaData, new JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            }));
+
+            var paperDtos = mapper.Map<IEnumerable<PaperBriefDetailDto>>(papers);
+            var shapeData = paperDtos.ShapeDate(parameters.fields);
+
+            var links = CreateLinkForUserHome(nameof(GetUserPublicPapers), parameters, papers.HasPrevious, papers.HasNext);
+
+            var shapedWithUserPaper = shapeData.Select(u =>
+            {
+                var paperDic = u as IDictionary<string, object>;
+                var paperLinks = CreateLinkForUserHome(nameof(GetUserPublicPapers), (Guid)paperDic["UserId"], (Guid)paperDic["Id"], null);
+
+                paperDic.Add("links", paperLinks);
+
+                return paperDic;
+            });
+
+            var collectionPaper = new
+            {
+                value = shapedWithUserPaper,
+                links
+            };
+
+            return Ok(collectionPaper);
         }
         //Use resource ID collection to query public resources
         [HttpGet("papers/{paperIds}",Name = nameof(GetPublicPapersForUserList))]
@@ -231,7 +273,7 @@ namespace PerPush.Api.Controllers
             return Ok(returnDto);
         }
         //User Patch Method Update Paper Detail
-        [HttpPatch("paper/{paperId}")]
+        [HttpPatch("paper/{paperId}",Name = nameof(PartiallyUpdatePaper))]
         public async Task<ActionResult<PaperDto>> PartiallyUpdatePaper(
             Guid userId, 
             Guid paperId, 
@@ -264,7 +306,7 @@ namespace PerPush.Api.Controllers
             return Ok(returnDto);
         }
         //Remove Paper
-        [HttpDelete("paper/{paperId}")]
+        [HttpDelete("paper/{paperId}",Name = nameof(DeletePaper))]
         public async Task<IActionResult> DeletePaper(Guid userId, Guid paperId)
         {
             if(! await userService.UserExistsAsync(userId))
@@ -283,7 +325,7 @@ namespace PerPush.Api.Controllers
             return NoContent();
         }
         //Get Options
-        [HttpOptions]
+        [HttpOptions(Name = nameof(GetOptions))]
         public IActionResult GetOptions()
         {
             Response.Headers.Add("Allow","GET,POST,OPTIONS,PUT,PATCH");
@@ -298,5 +340,92 @@ namespace PerPush.Api.Controllers
 
             return (ActionResult)options.Value.InvalidModelStateResponseFactory(ControllerContext);
         }
+        private string CreatePapersResourceUri(string routeName,PaperDtoParameters parameters, ResourceUriType type)
+        {
+            switch (type)
+            {
+                case ResourceUriType.PreviousPage:
+                    return Url.Link( routeName , new
+                    {
+                        orderBy = parameters.OrderBy,
+                        pageNumber = parameters.PageNumber - 1,
+                        pageSize = parameters.PageSize,
+                        title = parameters.Title,
+                        lable = parameters.Lable,
+                        searchTerm = parameters.SearchTerm,
+                    });
+                case ResourceUriType.NextPage:
+                    return Url.Link( routeName, new
+                    {
+                        orderBy = parameters.OrderBy,
+                        pageNumber = parameters.PageNumber + 1,
+                        pageSize = parameters.PageSize,
+                        title = parameters.Title,
+                        lable = parameters.Lable,
+                        searchTerm = parameters.SearchTerm,
+                    });
+                default:
+                    return Url.Link( routeName, new
+                    {
+                        orderBy = parameters.OrderBy,
+                        pageNumber = parameters.PageNumber,
+                        pageSize = parameters.PageSize,
+                        title = parameters.Title,
+                        lable = parameters.Lable,
+                        searchTerm = parameters.SearchTerm,
+                    });
+
+            }
+        }
+        private IEnumerable<LinkDto> CreateLinkForUserHome(
+            string routeName, 
+            Guid userId, 
+            Guid paperId, 
+            string fields)
+        {
+            List<LinkDto> links = new List<LinkDto>();
+            if (string.IsNullOrWhiteSpace(fields))
+            {
+                links.Add(new LinkDto(Url.Link(routeName, new { userId, paperId }),
+                    "self",
+                    "GET"));
+            }
+            else
+            {
+                links.Add(new LinkDto(Url.Link(routeName, new { userId, paperId, fields }),
+                    "self",
+                    "GET"));
+            }
+            
+            links.Add(new LinkDto(Url.Link(nameof(DeletePaper), new { userId, paperId }),
+                "delete_self",
+                "DELETE"));
+
+            return links;
+        }
+        private IEnumerable<LinkDto> CreateLinkForUserHome(string routeName,PaperDtoParameters parameters, bool hasPrevious, bool hasNext)
+        {
+            List<LinkDto> links = new List<LinkDto>();
+            links.Add(new LinkDto(CreatePapersResourceUri( routeName, parameters, ResourceUriType.CurrentPage),
+                "self",
+                "GET"));
+
+            if (hasPrevious)
+            {
+                links.Add(new LinkDto(CreatePapersResourceUri(routeName, parameters, ResourceUriType.PreviousPage),
+                    "perviousPage",
+                    "GET"));
+            }
+
+            if (hasNext)
+            {
+                links.Add(new LinkDto(CreatePapersResourceUri(routeName, parameters, ResourceUriType.NextPage),
+                    "nextPage",
+                    "GET"));
+            }
+
+            return links;
+        }
+
     }
 }

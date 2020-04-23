@@ -1,5 +1,6 @@
 ﻿using PerPush.Api.DtoParameters;
 using PerPush.Api.Entities;
+using PerPush.Api.Helpers;
 using PerPush.Api.Models;
 using System;
 using System.Collections.Generic;
@@ -17,9 +18,9 @@ namespace PerPush.Api.Services
         //---------------------Paper------------------
         
         //public or private File under user name
-        Task<IEnumerable<Paper>> GetUserPrivatePapersAsync(Guid userId, PaperDtoParameters parameters);
+        Task<PagedList<Paper>> GetUserPrivatePapersAsync(Guid userId, PaperDtoParameters parameters);
         Task<IEnumerable<Paper>> GetUserPrivatePapersAsync(Guid userId, IEnumerable<Guid> papersId);
-        Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId, PaperDtoParameters parameters);
+        Task<PagedList<Paper>> GetUserPublicPaperAsync(Guid userId, PaperDtoParameters parameters);
         Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId, IEnumerable<Guid> papersId);
         Task<Paper> GetPaperAsync(Guid userId, Guid paperId);
         //------------ Need to execute SaveAsync Method

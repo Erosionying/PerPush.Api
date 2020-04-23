@@ -35,7 +35,7 @@ namespace PerPush.Api.Services
 
             return userInfo;
         }
-        public async Task<IEnumerable<Paper>> GetUserPrivatePapersAsync(Guid userId, PaperDtoParameters parameters)
+        public async Task<PagedList<Paper>> GetUserPrivatePapersAsync(Guid userId, PaperDtoParameters parameters)
         {
             if (userId == Guid.Empty)
             {
@@ -101,7 +101,7 @@ namespace PerPush.Api.Services
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId, PaperDtoParameters parameters)
+        public async Task<PagedList<Paper>> GetUserPublicPaperAsync(Guid userId, PaperDtoParameters parameters)
         {
             if (userId == Guid.Empty)
             {
