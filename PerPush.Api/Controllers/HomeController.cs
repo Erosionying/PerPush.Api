@@ -40,6 +40,15 @@ namespace PerPush.Api.Controllers
         [HttpHead]
         public async Task<IActionResult> GetBriefPapers([FromQuery] PaperDtoParameters paperDtoParameters)
         {
+            if(!string.IsNullOrWhiteSpace(paperDtoParameters.fields))
+            {
+                var fields = paperDtoParameters.fields.Split(",");
+                if (!fields.Contains("Id") && !fields.Contains("userId"))
+                {
+                    return UnprocessableEntity();
+                }
+            }
+            
             if(!propertyMappingService.ValidMappingExists<PaperDto, Paper>(paperDtoParameters.OrderBy))
             {
                 return BadRequest();
@@ -79,8 +88,9 @@ namespace PerPush.Api.Controllers
             var shapedWithPapers = shapeData.Select(p =>
             {
                 var paperDic = p as IDictionary<string, object>;
-                var paperLinks = CreateLinkForHome((Guid)paperDic["UserId"], (Guid)paperDic["Id"], null);
 
+                var paperLinks = CreateLinkForHome((Guid)paperDic["UserId"], (Guid)paperDic["Id"], null);
+               
                 paperDic.Add("links", paperLinks);
 
                 return paperDic;
