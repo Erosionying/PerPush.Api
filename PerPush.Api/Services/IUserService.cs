@@ -23,6 +23,9 @@ namespace PerPush.Api.Services
         Task<PagedList<Paper>> GetUserPublicPaperAsync(Guid userId, PaperDtoParameters parameters);
         Task<IEnumerable<Paper>> GetUserPublicPaperAsync(Guid userId, IEnumerable<Guid> papersId);
         Task<Paper> GetPaperAsync(Guid userId, Guid paperId);
+
+        Task<Guid> GetUserIdAsync(string userName);
+
         //------------ Need to execute SaveAsync Method
         void AddPaper(Guid userId, Paper paper);
         void UpdatePaper(Paper paper);
@@ -33,7 +36,7 @@ namespace PerPush.Api.Services
         Task<bool> SaveAsync();
 
         //----------Determine whether the login parameters are valid-------
-        bool IsValid(LoginRequestDto req);
-        
+        Guid IsValid(LoginRequestDto req);
+
     }
 }

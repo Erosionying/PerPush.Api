@@ -22,7 +22,7 @@ namespace PerPush.Api.Controllers
         }
         //Get Token / Login
         [AllowAnonymous]
-        [HttpPost, Route("requesToken",Name = nameof(RequestToken))]
+        [HttpPost, Route("requestToken",Name = nameof(RequestToken))]
         public ActionResult RequestToken([FromBody] LoginRequestDto request)
         {
             if(!ModelState.IsValid)
@@ -31,9 +31,11 @@ namespace PerPush.Api.Controllers
             }
 
             string token = null;
-            if(authenticateService.IsAuthenticated(request, out token))
+            var userId = authenticateService.IsAuthenticated(request, out token);
+            var newToken = userId + "." + token;
+            if(userId != Guid.Empty)
             {
-                return Ok(token);
+                return Ok(newToken);
             }
 
             return BadRequest("InValid Request");

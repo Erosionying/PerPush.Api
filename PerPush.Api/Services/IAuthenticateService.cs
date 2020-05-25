@@ -8,6 +8,6 @@ namespace PerPush.Api.Services
 {
     public interface IAuthenticateService
     {
-        bool IsAuthenticated(LoginRequestDto request, out string token);
+        Guid IsAuthenticated(LoginRequestDto request, out string token);
     }
 }

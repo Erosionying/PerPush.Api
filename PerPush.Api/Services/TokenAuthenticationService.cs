@@ -22,12 +22,13 @@ namespace PerPush.Api.Services
             this.userService = userService ?? throw new ArgumentNullException(nameof(userService));
             this.tokenManagement = (tokenManagement.Value) ?? throw new ArgumentNullException(nameof(tokenManagement));
         }
-        public bool IsAuthenticated(LoginRequestDto request, out string token)
+        public Guid IsAuthenticated(LoginRequestDto request, out string token)
         {
             token = string.Empty;
-            if(!userService.IsValid(request))
+            var userId = userService.IsValid(request);
+            if(userId == Guid.Empty)
             {
-                return false;
+                return Guid.Empty;
             }
             var claims = new[]
             {
@@ -41,7 +42,9 @@ namespace PerPush.Api.Services
 
             token = new JwtSecurityTokenHandler().WriteToken(jwtToken);
 
-            return true;
+
+
+            return userId;
 
         }
     }

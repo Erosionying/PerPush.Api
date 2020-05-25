@@ -7,6 +7,8 @@ using PerPush.Api.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace PerPush.Api.Services
@@ -186,36 +188,46 @@ namespace PerPush.Api.Services
                 .Where(x => x.UserId == userId && x.Id == paperId)
                 .FirstOrDefaultAsync();
         }
-        public bool IsValid(LoginRequestDto req)
+        public Guid IsValid(LoginRequestDto req)
         {
-            var user =  context.users
+            req.Password = EncryptString(req.Password);
+
+            var user = context.users
                 .Where(x => x.Email == req.UserName)
                 .Where(x => x.password == req.Password)
                 .SingleOrDefault();
-            if(user == null)
+
+            if (user == null)
             {
-                return false;
+                return Guid.Empty;
             }
 
-            return true;
+            return user.Id;
         }
 
         //add user
         public async Task<bool> RegisteredUser(User user)
         {
-            if(user == null)
+            if (user == null)
             {
                 throw new ArgumentNullException(nameof(user));
             }
 
-            var queryUser = await context.users.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
+            user.Email = user.Email.Trim();
 
-            if(!(queryUser == null))
+            var queryUser = await context.users.Where(x => x.Email == user.Email)
+                .FirstOrDefaultAsync();
+
+            if (!(queryUser == null))
             {
                 return false;
             }
+
             user.Id = Guid.NewGuid();
+            user.password = EncryptString(user.password);
+
             context.Add(user);
+
             return true;
         }
 
@@ -261,6 +273,39 @@ namespace PerPush.Api.Services
             }
 
             return await context.users.AnyAsync(x => x.Id == userId);
+        }
+
+        public async Task<Guid> GetUserIdAsync(string userName)
+        {
+            if (userName == null)
+            {
+                throw new ArgumentNullException(userName);
+            }
+
+            var Id = await (from u in context.users
+                     .Where(u => u.Email.Equals(userName))
+                            select u.Id).SingleOrDefaultAsync();
+
+            return Id;
+
+        }
+
+        private string EncryptString(string str)
+        {
+            MD5 md5 = MD5.Create();
+
+            byte[] byteOld = Encoding.UTF8.GetBytes(str);
+
+            byte[] byteNew = md5.ComputeHash(byteOld);
+
+            StringBuilder sb = new StringBuilder();
+            foreach (byte b in byteNew)
+            {
+
+                sb.Append(b.ToString("x2"));
+            }
+
+            return sb.ToString();
         }
     }
 }
