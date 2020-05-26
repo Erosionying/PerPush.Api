@@ -23,7 +23,7 @@ namespace PerPush.Api.Controllers
     [Route("api/user/{userId}")]
     [ApiController]
     [LimitPerMin]
-    //[Authorize]
+    [Authorize]
     public class UsersController:ControllerBase
     {
         private readonly IUserService userService;
