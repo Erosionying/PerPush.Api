@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace PerPush.Api.Controllers
 {
-    [Route("api/account")]
+    [Route("api/account/registered")]
     [ApiController]
     [LimitPerMin(5)]
     public class UserRegisteredController:ControllerBase
