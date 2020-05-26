@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using PerPush.Api.Attributes;
 using PerPush.Api.Entities;
 using PerPush.Api.Models;
 using PerPush.Api.Services;
@@ -12,6 +13,7 @@ namespace PerPush.Api.Controllers
 {
     [Route("api/account")]
     [ApiController]
+    [LimitPerMin(5)]
     public class UserRegisteredController:ControllerBase
     {
         private readonly IMapper mapper;

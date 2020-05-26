@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PerPush.Api.Attributes;
 using PerPush.Api.Models;
 using PerPush.Api.Services;
 using System;
@@ -11,6 +12,7 @@ namespace PerPush.Api.Controllers
 {
     [Route("api/login")]
     [ApiController]
+    [LimitPerMin(5)]
     public class AuthenticationController:ControllerBase
     {
         private readonly IAuthenticateService authenticateService;

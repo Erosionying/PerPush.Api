@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using PerPush.Api.Attributes;
 using PerPush.Api.DtoParameters;
 using PerPush.Api.Entities;
 using PerPush.Api.Helpers;
@@ -16,6 +17,7 @@ namespace PerPush.Api.Controllers
 {
     [Route("api/home")]
     [ApiController]
+    [LimitPerMin(10)]
     public class HomeController:ControllerBase
     {
         private readonly IPaperService paperService;

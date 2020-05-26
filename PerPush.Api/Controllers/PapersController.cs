@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using PerPush.Api.Attributes;
 using PerPush.Api.DtoParameters;
 using PerPush.Api.Helpers;
 using PerPush.Api.Models;
@@ -13,6 +14,7 @@ namespace PerPush.Api.Controllers
 {
     [Route("api/user/{userId}")]
     [ApiController]
+    [LimitPerMin(10)]
     public class PapersController:ControllerBase
     {
         private readonly IMapper mapper;
