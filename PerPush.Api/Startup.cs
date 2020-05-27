@@ -67,12 +67,6 @@ namespace PerPush.Api
                 options.UseSqlServer(Configuration.GetConnectionString("Localteststring"));
             });
 
-            /*
-            services.AddHsts(options =>
-            {
-                
-            });
-                */
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IPaperService, PaperService>();
             services.AddScoped<IAuthenticateService, TokenAuthenticationService>();
