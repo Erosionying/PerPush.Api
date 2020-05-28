@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PerPush.Api.Attributes;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -20,9 +21,13 @@ namespace PerPush.Api.Models
         public string LastName { get; set; }
 
         [Required]
+        [EmailAddress]
         [MaxLength(64)]
+        [NoSpace]
         //Account user name
         public string Email { get; set; }
+
+        [DataType(DataType.Password)]
         //Account password
         [Required, Display(Name = "password")]
         [StringLength(32, MinimumLength = 6,ErrorMessage = "The minimum length of the {0} is {2}")]
