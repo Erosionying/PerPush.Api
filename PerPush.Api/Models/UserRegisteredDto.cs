@@ -27,6 +27,7 @@ namespace PerPush.Api.Models
         //Account user name
         public string Email { get; set; }
 
+        [NoSpace]
         [DataType(DataType.Password)]
         //Account password
         [Required, Display(Name = "password")]

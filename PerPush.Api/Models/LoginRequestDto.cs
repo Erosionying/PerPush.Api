@@ -13,6 +13,7 @@ namespace PerPush.Api.Models
         [JsonProperty("username")]
         public string UserName { get; set; }
 
+        [NoSpace]
         [Required]
         [JsonProperty("password")]
         public string Password { get; set; }
